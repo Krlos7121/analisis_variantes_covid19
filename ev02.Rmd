@@ -1,0 +1,61 @@
+---
+title: "Evidencia 2"
+author: "Carlos Iván Fonseca Mondragón"
+mat: "A01771689"
+output: html_notebook
+---
+```{r}
+library(seqinr)
+library(Biostrings)
+library(adegenet)
+library(ape)
+library(ggtree)
+library(DECIPHER)
+library(viridis)
+library(ggplot2)
+library(phytools)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+```
+
+<!-- Crear una lista que contenga el nombre de cada país, para buscar en la carpeta donde se encuentran -->
+```{r}
+secuencia_paises<-c()
+lista_paises<- c('alemania','argentina','australia','brazil','espana','eua','francia','india','indonesia','iran','italia','japon','mexico','paisesbajos','reinounido','rusia','surcorea','turquia','taiwan','vietnam')
+
+```
+
+```{r}
+for(pais in lista_paises){
+  (pais)
+  file_path <- paste("/Users/krlos/Documents/TEC/2do/Entrega2/paises_top20/muestra_", pais, ".fasta", sep="")
+  current <- readDNAStringSet(file_path)
+  cat(paste(width(current), "-> longitud |  "))
+  secuencia_paises <- append(secuencia_paises, current)
+}
+```
+
+```{r}
+combinadas <- DNAStringSet(secuencia_paises)
+secuencias <- OrientNucleotides(combinadas)
+secuencias_alineadas <- AlignSeqs(secuencias)
+```
+
+
+```{r}
+BrowseSeqs(secuencias_alineadas, highlight=0)
+writeXStringSet(secuencias_alineadas,file="secuencias_alineadas.fasta")
+adn_acomodados <- read.alignment("secuencias_alineadas.fasta", format = "fasta")
+Dist <- dist.alignment(adn_acomodados, matrix = "similarity")
+fil_tree <- nj(Dist)
+plot(fil_tree, cex = 0.6)
+title("Parentezco al comparar variantes de veinte paises de SARS-CoV-2")
+info <- info.frame(variante=lista_paises, secuencia = secuencia_paises)
+data_sep <- info%>% separate(col = secuencia, into = c("A", "C", "G", "T"), sep = "(?<=.)(?=.)", fill = "right")
+data_long <- data_sep %>% pivot_longer(cols = c("A", "C", "G", "T"), names_to = "Tipo_de_base", values_to = "Cantidad_de_bases")
+ggplot(data_long, aes(x = variante, y = num_bases, fill = tipo_base)) + 
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Num bases por tipo_base", x = "Variante", y = "Número de bases", fill = "Tipo de base")
+```
